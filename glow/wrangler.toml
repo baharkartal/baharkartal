@@ -1,0 +1,17 @@
+name = "glow"
+main = "worker/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+# Bahar's data: one KV namespace. The id is filled in by the setup steps in README.md.
+[[kv_namespaces]]
+binding = "GLOW"
+id = "REPLACE_WITH_KV_ID"
+
+[triggers]
+crons = ["* * * * *"]

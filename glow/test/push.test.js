@@ -1,0 +1,13 @@
+import { encryptPayload, b64u, generateVapidKeys } from '../worker/push.js';
+import ece from 'http_ece';
+import crypto from 'node:crypto';
+const ua = crypto.createECDH('prime256v1'); ua.generateKeys();
+const auth = crypto.randomBytes(16);
+const sub = { endpoint: 'https://example.invalid/x', keys: { p256dh: b64u(new Uint8Array(ua.getPublicKey())), auth: b64u(new Uint8Array(auth)) } };
+const msg = JSON.stringify({ title: '💊 İlaç zamanı', body: 'Effexor, Zoretanin' });
+const cipher = await encryptPayload(sub, msg);
+const plain = ece.decrypt(Buffer.from(cipher), { version: 'aes128gcm', privateKey: ua, authSecret: auth });
+if (plain.toString() !== msg) throw new Error('mismatch: ' + plain.toString());
+const v = await generateVapidKeys();
+if (!v.publicKey || JSON.parse(v.privateJwk).kty !== 'EC') throw new Error('vapid');
+console.log('push encryption OK');
