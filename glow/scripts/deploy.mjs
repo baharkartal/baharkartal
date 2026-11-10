@@ -4,7 +4,9 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import { generateVapidKeys } from '../worker/push.js';
 
-const run = (cmd, input) => execSync(cmd, { stdio: input ? ['pipe', 'pipe', 'inherit'] : ['inherit', 'pipe', 'inherit'], input, encoding: 'utf8' });
+// stdin is not a terminal, so wrangler never stops to ask questions
+const run = (cmd, input) => execSync(cmd, { stdio: [input ? 'pipe' : 'ignore', 'pipe', 'inherit'], input, encoding: 'utf8', shell: true });
+const tryRun = cmd => { try { return run(cmd); } catch (e) { return ''; } };
 let toml = fs.readFileSync('wrangler.toml', 'utf8');
 
 if (toml.includes('REPLACE_WITH_KV_ID')) {
@@ -15,7 +17,7 @@ if (toml.includes('REPLACE_WITH_KV_ID')) {
   toml = toml.replace('REPLACE_WITH_KV_ID', id); fs.writeFileSync('wrangler.toml', toml);
 }
 
-const secrets = run('npx wrangler secret list 2>/dev/null || echo []');
+const secrets = tryRun('npx wrangler secret list');
 if (!secrets.includes('VAPID_PRIVATE_JWK')) {
   console.log('Bildirim anahtarları oluşturuluyor…');
   const v = await generateVapidKeys();
@@ -23,4 +25,7 @@ if (!secrets.includes('VAPID_PRIVATE_JWK')) {
   run('npx wrangler secret put VAPID_PUBLIC_KEY', v.publicKey);
   run('npx wrangler secret put VAPID_PRIVATE_JWK', v.privateJwk);
 }
-console.log(run('npx wrangler deploy'));
+const out = run('npx wrangler deploy');
+console.log(out);
+const url = (out.match(/https:\/\/[^\s]+workers\.dev/) || [])[0];
+if (url) console.log('\n✨ GLOW hazır: ' + url + '\nBu adresi iPhone\'da Safari ile aç → Paylaş → Ana Ekrana Ekle.');
