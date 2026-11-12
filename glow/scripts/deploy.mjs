@@ -7,6 +7,7 @@ import { generateVapidKeys } from '../worker/push.js';
 // stdin is not a terminal, so wrangler never stops to ask questions
 const run = (cmd, input) => execSync(cmd, { stdio: [input ? 'pipe' : 'ignore', 'pipe', 'inherit'], input, encoding: 'utf8', shell: true });
 const tryRun = cmd => { try { return run(cmd); } catch (e) { return ''; } };
+run('node scripts/build-assets.mjs');
 let toml = fs.readFileSync('wrangler.toml', 'utf8');
 
 if (toml.includes('REPLACE_WITH_KV_ID')) {

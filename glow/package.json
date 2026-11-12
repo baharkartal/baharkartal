@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "dev": "node scripts/build-assets.mjs && wrangler dev",
+    "deploy": "node scripts/build-assets.mjs && wrangler deploy",
     "test": "node test/run.js",
-    "deploy:first": "node scripts/deploy.mjs"
+    "deploy:first": "node scripts/deploy.mjs",
+    "build": "node scripts/build-assets.mjs"
   },
   "devDependencies": {
     "wrangler": "4.149.0",

@@ -2,6 +2,14 @@
 // and sends notifications once a minute (cron).
 import { dueBetween } from '../public/js/schedule.js';
 import { sendPush, b64u } from './push.js';
+import ASSETS from './assets.gen.js';
+
+const bin = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+function serveAsset(url) {
+  const a = ASSETS[url.pathname === '/' ? '/index.html' : url.pathname] || ASSETS['/index.html'];
+  const cache = /\.(png)$/.test(url.pathname) ? 'public, max-age=86400' : 'no-cache';
+  return new Response(a.b ? bin(a.d) : a.d, { headers: { 'content-type': a.t, 'cache-control': cache } });
+}
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 const enc = new TextEncoder();
@@ -139,7 +147,7 @@ export default {
     if (url.pathname.startsWith('/api/')) {
       try { return await api(req, env, url); } catch (e) { return json({ error: 'Sunucu hatası: ' + (e && e.message || e) }, 500); }
     }
-    return env.ASSETS.fetch(req);
+    return serveAsset(url);
   },
   async scheduled(event, env, ctx) { ctx.waitUntil(cron(env, event.scheduledTime)); }
 };
